@@ -639,6 +639,7 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
     }
 
     /**
+     * 这里是将消息送回去，告诉broker进行消息重新投递
      * Send message back to broker which will be re-delivered in future.
      *
      * This method will be removed or it's visibility will be changed in a certain version after April 5, 2020, so
@@ -694,6 +695,7 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
      */
     @Override
     public void start() throws MQClientException {
+        //这里就是consumer的启动代码了
         setConsumerGroup(NamespaceUtil.wrapNamespace(this.getNamespace(), this.consumerGroup));
         this.defaultMQPushConsumerImpl.start();
         if (null != traceDispatcher) {

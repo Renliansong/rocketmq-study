@@ -45,7 +45,9 @@ public class ProcessQueue {
     private final static long PULL_MAX_IDLE_TIME = Long.parseLong(System.getProperty("rocketmq.client.pull.pullMaxIdleTime", "120000"));
     private final InternalLogger log = ClientLogger.getLog();
     private final ReadWriteLock lockTreeMap = new ReentrantReadWriteLock();
+    //保存拉取到的消息
     private final TreeMap<Long, MessageExt> msgTreeMap = new TreeMap<Long, MessageExt>();
+    //当前保存的消息数量，放进来的时候+，移除的时候-
     private final AtomicLong msgCount = new AtomicLong();
     private final AtomicLong msgSize = new AtomicLong();
     private final Lock lockConsume = new ReentrantLock();
@@ -54,27 +56,31 @@ public class ProcessQueue {
      */
     private final TreeMap<Long, MessageExt> consumingMsgOrderlyTreeMap = new TreeMap<Long, MessageExt>();
     private final AtomicLong tryUnlockTimes = new AtomicLong(0);
+    //processqueue中保存的消息最大的offset，既consumeQueue的offset
     private volatile long queueOffsetMax = 0L;
     private volatile boolean dropped = false;
+    //设置最后一次拉消息的时间
     private volatile long lastPullTimestamp = System.currentTimeMillis();
     private volatile long lastConsumeTimestamp = System.currentTimeMillis();
     private volatile boolean locked = false;
     private volatile long lastLockTimestamp = System.currentTimeMillis();
     private volatile boolean consuming = false;
     private volatile long msgAccCnt = 0;
-
+    //判断锁是否超时
     public boolean isLockExpired() {
         return (System.currentTimeMillis() - this.lastLockTimestamp) > REBALANCE_LOCK_MAX_LIVE_TIME;
     }
-
+    //若超时发生异常，则重建processqueue
     public boolean isPullExpired() {
         return (System.currentTimeMillis() - this.lastPullTimestamp) > PULL_MAX_IDLE_TIME;
     }
 
     /**
+     * 定时清理消费时间超过15分钟的消息
      * @param pushConsumer
      */
     public void cleanExpiredMsg(DefaultMQPushConsumer pushConsumer) {
+        //顺序消费是不处理，因为顺序消费必须等待上一个处理完了，才能开始处理下一个
         if (pushConsumer.getDefaultMQPushConsumerImpl().isConsumeOrderly()) {
             return;
         }
@@ -105,6 +111,9 @@ public class ProcessQueue {
                 try {
                     this.lockTreeMap.writeLock().lockInterruptibly();
                     try {
+                        //如果这时processQueue里offset最小的消息还是上面取到的消息，
+                        //则将其移除，因为在上面处理的过程中，消息可能已经被消费完成，并且移除了
+                        //所以这里思考一下，当一个消息开始被消费的时候，肯定是有标记的
                         if (!msgTreeMap.isEmpty() && msg.getQueueOffset() == msgTreeMap.firstKey()) {
                             try {
                                 removeMessage(Collections.singletonList(msg));
@@ -123,7 +132,7 @@ public class ProcessQueue {
             }
         }
     }
-
+    //将拉取到的消息放入processqueue中
     public boolean putMessage(final List<MessageExt> msgs) {
         boolean dispatchToConsume = false;
         try {
@@ -131,6 +140,7 @@ public class ProcessQueue {
             try {
                 int validMsgCnt = 0;
                 for (MessageExt msg : msgs) {
+                    /**这里为什么用个old呢，因为红黑树在put的时候，如果原先有值，则会返回原先的值，如果原先没有，则会返回null*/
                     MessageExt old = msgTreeMap.put(msg.getQueueOffset(), msg);
                     if (null == old) {
                         validMsgCnt++;
@@ -142,6 +152,7 @@ public class ProcessQueue {
 
                 if (!msgTreeMap.isEmpty() && !this.consuming) {
                     dispatchToConsume = true;
+                    //有消息了，判定为可消费
                     this.consuming = true;
                 }
 
@@ -151,6 +162,7 @@ public class ProcessQueue {
                     if (property != null) {
                         long accTotal = Long.parseLong(property) - messageExt.getQueueOffset();
                         if (accTotal > 0) {
+                            //这里表示更新还有多少消息没消费
                             this.msgAccCnt = accTotal;
                         }
                     }
@@ -164,7 +176,7 @@ public class ProcessQueue {
 
         return dispatchToConsume;
     }
-
+    //获取还未消费的消息数量
     public long getMaxSpan() {
         try {
             this.lockTreeMap.readLock().lockInterruptibly();
@@ -182,6 +194,7 @@ public class ProcessQueue {
         return 0;
     }
 
+    //从消息队列中移除消息
     public long removeMessage(final List<MessageExt> msgs) {
         long result = -1;
         final long now = System.currentTimeMillis();

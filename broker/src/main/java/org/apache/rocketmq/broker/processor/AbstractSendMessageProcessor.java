@@ -286,8 +286,10 @@ public abstract class AbstractSendMessageProcessor extends AsyncNettyRequestProc
         SendMessageRequestHeaderV2 requestHeaderV2 = null;
         SendMessageRequestHeader requestHeader = null;
         switch (request.getCode()) {
+            //注意，switch如果没有break，一旦从某一个case进去了，会执行后面的所有case的
             case RequestCode.SEND_BATCH_MESSAGE:
             case RequestCode.SEND_MESSAGE_V2:
+                /**netty的decode只是将公共部分解析了，命令的具体部分字段，都放在了一个hashmap里面，这里就是将map的数据解析到SendMessageRequestHeaderV2里面*/
                 requestHeaderV2 =
                     (SendMessageRequestHeaderV2) request
                         .decodeCommandCustomHeader(SendMessageRequestHeaderV2.class);
@@ -297,6 +299,7 @@ public abstract class AbstractSendMessageProcessor extends AsyncNettyRequestProc
                         (SendMessageRequestHeader) request
                             .decodeCommandCustomHeader(SendMessageRequestHeader.class);
                 } else {
+                    //前面的都还只是abcd这样标示的，这里转换成了一个更加形象生动的对象
                     requestHeader = SendMessageRequestHeaderV2.createSendMessageRequestHeaderV1(requestHeaderV2);
                 }
             default:

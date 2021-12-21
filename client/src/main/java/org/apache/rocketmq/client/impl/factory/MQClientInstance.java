@@ -231,13 +231,14 @@ public class MQClientInstance {
                     if (null == this.clientConfig.getNamesrvAddr()) {
                         this.mQClientAPIImpl.fetchNameServerAddr();
                     }
-                    // Start request-response channel
+                    /** Start request-response channel  这里面要重点关注，里面有个responseTable的定时扫描*/
                     this.mQClientAPIImpl.start();
                     // Start various schedule tasks
                     this.startScheduledTask();
                     // Start pull service
+                    /**先研究这里面的代码吧，这里就是拉取消息*/
                     this.pullMessageService.start();
-                    // Start rebalance service
+                    /** Start rebalance service 往 消费队列塞数据*/
                     this.rebalanceService.start();
                     // Start push service
                     this.defaultMQProducer.getDefaultMQProducerImpl().start(false);

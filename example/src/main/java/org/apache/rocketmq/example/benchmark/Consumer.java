@@ -49,7 +49,7 @@ public class Consumer {
             System.exit(-1);
         }
 
-        final String topic = commandLine.hasOption('t') ? commandLine.getOptionValue('t').trim() : "BenchmarkTest";
+        final String topic = commandLine.hasOption('t') ? commandLine.getOptionValue('t').trim() : "mq-topic";
         final String groupPrefix = commandLine.hasOption('g') ? commandLine.getOptionValue('g').trim() : "benchmark_consumer";
         final String isSuffixEnable = commandLine.hasOption('p') ? commandLine.getOptionValue('p').trim() : "true";
         final String filterType = commandLine.hasOption('f') ? commandLine.getOptionValue('f').trim() : null;
@@ -67,7 +67,6 @@ public class Consumer {
         final Timer timer = new Timer("BenchmarkTimerThread", true);
 
         final LinkedList<Long[]> snapshotList = new LinkedList<Long[]>();
-
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
@@ -116,6 +115,7 @@ public class Consumer {
             String ns = commandLine.getOptionValue('n');
             consumer.setNamesrvAddr(ns);
         }
+        consumer.setNamesrvAddr(":9876");
         consumer.setInstanceName(Long.toString(System.currentTimeMillis()));
 
         if (filterType == null || expression == null) {

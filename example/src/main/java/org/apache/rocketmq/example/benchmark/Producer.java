@@ -48,13 +48,13 @@ public class Producer {
             System.exit(-1);
         }
 
-        final String topic = commandLine.hasOption('t') ? commandLine.getOptionValue('t').trim() : "BenchmarkTest";
-        final int threadCount = commandLine.hasOption('w') ? Integer.parseInt(commandLine.getOptionValue('w')) : 64;
+        final String topic = commandLine.hasOption('t') ? commandLine.getOptionValue('t').trim() : "mq-topic";
+        final int threadCount = commandLine.hasOption('w') ? Integer.parseInt(commandLine.getOptionValue('w')) : 4;
         final int messageSize = commandLine.hasOption('s') ? Integer.parseInt(commandLine.getOptionValue('s')) : 128;
         final boolean keyEnable = commandLine.hasOption('k') && Boolean.parseBoolean(commandLine.getOptionValue('k'));
         final int propertySize = commandLine.hasOption('p') ? Integer.parseInt(commandLine.getOptionValue('p')) : 0;
 
-        System.out.printf("topic %s threadCount %d messageSize %d keyEnable %s%n", topic, threadCount, messageSize, keyEnable);
+         System.out.printf("topic %s threadCount %d messageSize %d keyEnable %s%n", topic, threadCount, messageSize, keyEnable);
 
         final InternalLogger log = ClientLogger.getLog();
 
@@ -105,8 +105,8 @@ public class Producer {
 
         if (commandLine.hasOption('n')) {
             String ns = commandLine.getOptionValue('n');
-            producer.setNamesrvAddr(ns);
         }
+        producer.setNamesrvAddr(":9876");
 
         producer.setCompressMsgBodyOverHowmuch(Integer.MAX_VALUE);
 
@@ -162,6 +162,7 @@ public class Producer {
 
                                 prevMaxRT = statsBenchmark.getSendMessageMaxRT().get();
                             }
+
                         } catch (RemotingException e) {
                             statsBenchmark.getSendRequestFailedCount().incrementAndGet();
                             log.error("[BENCHMARK_PRODUCER] Send Exception", e);
@@ -190,6 +191,11 @@ public class Producer {
                     }
                 }
             });
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 

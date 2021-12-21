@@ -19,10 +19,13 @@ package org.apache.rocketmq.client.impl.consumer;
 import org.apache.rocketmq.common.message.MessageQueue;
 
 public class PullRequest {
+    //从这里可以看出来，pullrequest就是为拉消息作准备的，里面有拉消息需要的所有参数
     private String consumerGroup;
+    //这里存的是几个基本信息，虽然不知道为什么要这样写，但是感觉写的很垃圾
     private MessageQueue messageQueue;
     private ProcessQueue processQueue;
     private long nextOffset;
+    //
     private boolean lockedFirst = false;
 
     public boolean isLockedFirst() {

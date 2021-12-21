@@ -410,7 +410,7 @@ public abstract class NettyRemotingAbstract {
         throws InterruptedException, RemotingSendRequestException, RemotingTimeoutException {
         final int opaque = request.getOpaque();
 
-        try {
+        try {//这个responseFuture在NettyClientHandler里面有处理
             final ResponseFuture responseFuture = new ResponseFuture(channel, opaque, timeoutMillis, null, null);
             this.responseTable.put(opaque, responseFuture);
             final SocketAddress addr = channel.remoteAddress();
@@ -462,8 +462,8 @@ public abstract class NettyRemotingAbstract {
             }
 
             final ResponseFuture responseFuture = new ResponseFuture(channel, opaque, timeoutMillis - costTime, invokeCallback, once);
-            this.responseTable.put(opaque, responseFuture);
-            try {
+            this.responseTable.put(opaque, responseFuture); /**从这里来看，response应该是异步的，有地方专门坚挺里面的responseFuture是否已就绪，看外面的childhandle或者sacan的逻辑吧*/
+            try { //从这里能看到发送消息
                 channel.writeAndFlush(request).addListener(new ChannelFutureListener() {
                     @Override
                     public void operationComplete(ChannelFuture f) throws Exception {

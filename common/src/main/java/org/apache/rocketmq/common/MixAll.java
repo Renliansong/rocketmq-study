@@ -134,10 +134,11 @@ public class MixAll {
 
         return 0;
     }
-
+    //将字符串保存至文件
     public static void string2File(final String str, final String fileName) throws IOException {
 
         String tmpFile = fileName + ".tmp";
+        //将内容写入临时文件中
         string2FileNotSafe(str, tmpFile);
 
         String bakFile = fileName + ".bak";
@@ -145,11 +146,12 @@ public class MixAll {
         if (prevContent != null) {
             string2FileNotSafe(prevContent, bakFile);
         }
-
+        //这里是有一个原文件内容的备份，名为bak
         File file = new File(fileName);
         file.delete();
 
         file = new File(tmpFile);
+        //将临时文件保存为真正的目标文件
         file.renameTo(new File(fileName));
     }
 

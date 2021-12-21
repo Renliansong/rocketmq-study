@@ -55,7 +55,7 @@ public class PullMessageService extends ServiceThread {
             log.warn("PullMessageServiceScheduledThread has shutdown");
         }
     }
-
+    //添加pullRequest到队列
     public void executePullRequestImmediately(final PullRequest pullRequest) {
         try {
             this.pullRequestQueue.put(pullRequest);
@@ -79,6 +79,7 @@ public class PullMessageService extends ServiceThread {
     private void pullMessage(final PullRequest pullRequest) {
         final MQConsumerInner consumer = this.mQClientFactory.selectConsumer(pullRequest.getConsumerGroup());
         if (consumer != null) {
+            //
             DefaultMQPushConsumerImpl impl = (DefaultMQPushConsumerImpl) consumer;
             impl.pullMessage(pullRequest);
         } else {
@@ -89,9 +90,10 @@ public class PullMessageService extends ServiceThread {
     @Override
     public void run() {
         log.info(this.getServiceName() + " service started");
-
+        //这里是只要没停止，就一直循环
         while (!this.isStopped()) {
             try {
+                //从pullrequest获取请求来源，这里思考一下为什么要从一个队列里面去获取，这里是将消息的拉取与拉取策略给分开了
                 PullRequest pullRequest = this.pullRequestQueue.take();
                 this.pullMessage(pullRequest);
             } catch (InterruptedException ignored) {

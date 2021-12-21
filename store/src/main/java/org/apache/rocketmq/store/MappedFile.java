@@ -209,7 +209,7 @@ public class MappedFile extends ReferenceResource {
             byteBuffer.position(currentPos);
             AppendMessageResult result;
             if (messageExt instanceof MessageExtBrokerInner) {
-                /**再进入这里，*/
+                /**再进入这里，将数据写入到buffer的缓冲区*/
                 result = cb.doAppend(this.getFileFromOffset(), byteBuffer, this.fileSize - currentPos, (MessageExtBrokerInner) messageExt);
             } else if (messageExt instanceof MessageExtBatch) {
                 result = cb.doAppend(this.getFileFromOffset(), byteBuffer, this.fileSize - currentPos, (MessageExtBatch) messageExt);
@@ -227,7 +227,7 @@ public class MappedFile extends ReferenceResource {
     public long getFileFromOffset() {
         return this.fileFromOffset;
     }
-
+    //文件末尾追加消息
     public boolean appendMessage(final byte[] data) {
         int currentPos = this.wrotePosition.get();
 
